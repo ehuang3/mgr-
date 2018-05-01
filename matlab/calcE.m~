@@ -1,0 +1,15 @@
+function [E] = calcE(c, s, p, f)
+%CALCE 
+%
+
+%% 
+
+[~,n_c] = size(c);
+[~,n_p] = size(p);
+E = complex(zeros(n_c,1));
+
+dist = norm(p-s) + norm(c-p);
+E = exp(1i*2*pi/f*dist);
+
+end
+
