@@ -126,7 +126,7 @@ exp(i*2*pi/f*dist);
 f = 1;
 
 % Camera locations.
-n_c = 600;
+n_c = 200;
 c = zeros(2,n_c);
 c(1,:) = linspace(-n_c/2, n_c/2, n_c);
 c(2,:) = 1000;
@@ -135,12 +135,12 @@ c(2,:) = 1000;
 s = [500; 500];
 
 % Random height map.
-n_x = 100;
+n_x = 10;
 x = zeros(2, n_x);
-x(1,:) = linspace(-10, 10, n_x);
-h_max = f;
+x(1,:) = linspace(-n_x/2, n_x/2, n_x);
+h_max = f/2;
 for i = 1:n_x
-    x(2,i) = h_max * rand;
+    x(2,i) = h_max * (randi(2)-1);
 end
 
 % Electric field.
@@ -151,6 +151,11 @@ plot(abs(E))
 
 subplot(2,1,2)
 plot(unwrap(angle(E)))
+hold on
+plot(angle(E));
+
+%% Brute force search.
+x_sol = calcX(E, c, s, x(1,:), [0; h_, f);
 
 
 %% Random height offset.
@@ -163,6 +168,7 @@ plot(abs(E))
 subplot(2,1,2)
 hold on
 plot(unwrap(angle(E)))
+plot(50 * angle(E));
 
 %% Fourier transform.
 y = fft(abs(E));

@@ -126,7 +126,7 @@ exp(i*2*pi/f*dist);
 f = 1;
 
 % Camera locations.
-n_c = 200;
+n_c = 500;
 c = zeros(2,n_c);
 c(1,:) = linspace(-n_c/2, n_c/2, n_c);
 c(2,:) = 1000;
@@ -135,24 +135,30 @@ c(2,:) = 1000;
 s = [500; 500];
 
 % Random height map.
-n_x = 100;
-x = zeros(2, n_x);
-x(1,:) = linspace(-10, 10, n_x);
-h_max = f;
-for i = 1:n_x
-    x(2,i) = h_max * rand;
+n_h = 8;
+h = zeros(2, n_h);
+h(1,:) = linspace(-n_h/2, n_h/2, n_h);
+h_max = f/2;
+for i = 1:n_h
+    h(2,i) = h_max * (randi(2)-1);
 end
 
 % Electric field.
-E = calcE(c, s, x, f);
+E = calcE(c, s, h, f);
 
 subplot(2,1,1)
 plot(abs(E))
 
 subplot(2,1,2)
 plot(unwrap(angle(E)))
-hold on
-plot(angle(E));
+
+%% Brute force search.
+x = h(1,:);
+y = [0; h_max];
+I = abs(E);
+h_ans = calcX(I, c, s, x, y, f);
+norm(h-h_ans)
+
 
 %% Random height offset.
 x(2,:) = x(2,:) + 0.1;
@@ -167,14 +173,15 @@ plot(unwrap(angle(E)))
 plot(50 * angle(E));
 
 %% Fourier transform.
-y = fft(abs(E));
+y = fft(abs(E)-mean(abs(E)));
 m = abs(y);                               % Magnitude
 p = unwrap(angle(y));                     % Phase
 
 f = (0:length(y)-1)*100/length(y);        % Frequency vector
 
 subplot(3,1,3)
-plot(abs(E))
+plot(abs(E)-mean(abs(E)))
+grid on
 
 subplot(3,1,1)
 plot(f,m)

@@ -26,6 +26,4 @@ target_link_libraries(mgr++ dw)
 enable_testing()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
 
-add_executable(testSubsetSum test/testSubsetSum.cpp)
-target_link_libraries(testSubsetSum ${MATIO_LIBRARIES})
-add_test(SubsetSum ${CMAKE_BINARY_DIR}/testSubsetSum)
+add_subdirectory(test)
