@@ -52,10 +52,16 @@ struct DiEdge : enable_shared_from_this<DiEdge> {
     ComplexPtr src;
     ComplexPtr dest;
     ComplexPtr incr;
+
+    static DiEdgePtr Connect(ComplexPtr src, ComplexPtr dest, ComplexPtr incr) {
+        DiEdgePtr e = make_shared<DiEdge>(src, dest, incr);
+        src->out.push_back(e);
+        dest->in.push_back(e);
+        return e;
+    }
+
     DiEdge(ComplexPtr src_, ComplexPtr dest_, ComplexPtr incr_)
     : src(src_), dest(dest_), incr(incr_) {
-        src->out.push_back(shared_from_this());
-        dest->in.push_back(shared_from_this());
     }
 };
 
@@ -124,7 +130,7 @@ public:
 
 typedef shared_ptr<HeightField> HeightFieldPtr;
 
-Graph DoSubsetSum(HeightFieldPtr S, ComplexPtr target, double c, bool useAbs=true) {
+Graph DoSubsetSum(HeightFieldPtr S, ComplexPtr target, double eps, bool useAbs=true) {
     // Calc real/imag min and max sums.
     vector<PointSetPtr> sets = S->sets;
     double inf = numeric_limits<double>::infinity();
@@ -145,15 +151,15 @@ Graph DoSubsetSum(HeightFieldPtr S, ComplexPtr target, double c, bool useAbs=tru
         }
         assert(rmin < rmax);
         assert(imin < imax);
-        cmin->real(cmin->real() + rmin);
+        cmin->real(cmin->real() + rmin); // FIXME computes total sum min, not intermediate sum min
         cmin->imag(cmin->imag() + imin);
         cmax->real(cmax->real() + rmax);
         cmax->imag(cmax->imag() + imax);
     }
     assert(cmin->real() < cmax->real());
     assert(cmin->imag() < cmax->imag());
-    cout << "cmin: " << cmin << endl;
-    cout << "cmax: " << cmax << endl;
+    cout << "cmin: " << *cmin << endl;
+    cout << "cmax: " << *cmax << endl;
 
     Graph G;
     vector<vector<ComplexPtr> > grid;
@@ -166,8 +172,8 @@ Graph DoSubsetSum(HeightFieldPtr S, ComplexPtr target, double c, bool useAbs=tru
     for (int si = 0; si < sets.size(); si++) {
         // Calc intermediate sums.
         sums.clear();
-        int nr = round((cmax->real()-cmin->real())/c)+1;
-        int nc = round((cmax->imag()-cmin->imag())/c)+1;
+        int nr = round((cmax->real()-cmin->real())/eps)+1;
+        int nc = round((cmax->imag()-cmin->imag())/eps)+1;
         grid.clear();
         grid.resize(nr, vector<ComplexPtr>(nc));
         std::vector<PointPtr>& pts = sets[si]->pts;
@@ -175,16 +181,22 @@ Graph DoSubsetSum(HeightFieldPtr S, ComplexPtr target, double c, bool useAbs=tru
             for (int pi = 0; pi < sums_prev.size(); pi++) {
                 complex<double> sum = pts[ei]->value + sums_prev[pi]->value;
                 // Calc index into grid.
-                int ri = round((sum.real()-cmin->real())/c);
-                int ci = round((sum.imag()-cmin->imag())/c);
+                int ri = round((sum.real()-cmin->real())/eps);
+                int ci = round((sum.imag()-cmin->imag())/eps);
                 assert(0 <= ri && ri < nr);
+                cout << "ci " << ci << endl;
+                cout << "nc " << nc << endl;
+                cout << "cmax " << cmax->imag() << endl;
+                cout << "sum " << sum.imag() << endl;
+
                 assert(0 <= ci && ci < nc);
+
                 if (grid[ri][ci].get() == nullptr) {
-                    grid[ri][ci] = make_shared<Complex>(cmin->real()+ri*c,cmin->imag()+ci*c);
+                    grid[ri][ci] = make_shared<Complex>(cmin->real()+ri*eps,cmin->imag()+ci*eps);
                     sums.push_back(grid[ri][ci]);
                 }
                 // Connect.
-                G.E.push_back(make_shared<DiEdge>(sums_prev[pi], grid[ri][ci], pts[ei]));
+                G.E.push_back(DiEdge::Connect(sums_prev[pi], grid[ri][ci], pts[ei]));
             }
         }
         // Add sums to graph.
@@ -195,8 +207,11 @@ Graph DoSubsetSum(HeightFieldPtr S, ComplexPtr target, double c, bool useAbs=tru
 
     // Check solution.
     for (int i = 0; i < sums.size(); i++) {
-        if (abs(sums[i]->abs()-target->abs()) < c/2*sets.size()) {
+        if (abs(sums[i]->abs()-target->abs()) < eps/2*sets.size()) {
             cout << "Success" << endl;
+            cout << *sums[i] << endl;
+            cout << *target << endl;
+            cout << eps/2*sets.size() << endl;
         }
     }
 
@@ -249,7 +264,7 @@ TEST(CalcE, 2pts) {
     Eigen::MatrixXd C = initCamera(200, 400, 1000);
     Eigen::Vector2d s = initLaser();
     // Init height field.
-    int nx = 2;
+    int nx = 5;
     int ny = 2;
     double f = 1;
     Eigen::VectorXd x(nx);
@@ -261,7 +276,9 @@ TEST(CalcE, 2pts) {
     Eigen::MatrixXd h = randomHeightMap(x, y);
     // Calc E.
     std::vector<ComplexPtr> E = calcE(C, s, h, f);
-    
+    // Run solver.
+    double eps = 0.01;
+    DoSubsetSum(H, E[0], eps);
 }
 
 int main(int argc, char* argv[]) {
