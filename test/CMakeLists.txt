@@ -40,6 +40,6 @@ include_directories("${source_dir}/googletest/include"
                     "${source_dir}/googlemock/include")
 
 # Add tests.
-add_executable(testSubsetSum testSubsetSum.cpp)
-target_link_libraries(testSubsetSum libgtest)
+add_executable(testSubsetSum testSubsetSum.cpp ../src/Backward.cpp)
+target_link_libraries(testSubsetSum libgtest dw)
 add_test(NAME testSubsetSum COMMAND testSubsetSum)

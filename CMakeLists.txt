@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 add_compile_options(-std=c++11)
 
 find_package(Eigen3 REQUIRED)
-find_package(MATIO REQUIRED)
+# find_package(MATIO REQUIRED)
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")

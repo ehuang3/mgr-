@@ -3,7 +3,6 @@
 #include <memory>
 #include <algorithm>
 #include <Eigen/Dense>
-#include <mgr++/MatIO.h>
 #include <complex>
 #include "gtest/gtest.h"
 
@@ -218,10 +217,31 @@ Eigen::Vector2d initLaser() {
 }
 
 Eigen::MatrixXd randomHeightMap(const Eigen::VectorXd& x, const Eigen::VectorXd& y) {
+    Eigen::MatrixXd h(2, x.size());
+    h.row(0) = x;
     for (int i = 0; i < x.size(); i++) {
-        
+        Eigen::MatrixXd r = y.size() * Eigen::MatrixXd::Random(1,1);
+        int ri = r.cwiseAbs().cast<int>()(0,0);
+        h(1,i) = y[ri];
     }
-    return Eigen::MatrixXd(1,1);
+    return h;
+}
+
+std::vector<ComplexPtr> calcE(const Eigen::MatrixXd& C, const Eigen::Vector2d& s, 
+                              const Eigen::MatrixXd& h, double f) {
+    int nc = C.cols();
+    int nh = h.cols();
+    std::vector<ComplexPtr> E(nc);
+    for (int i = 0; i < nc; i++) {
+        E[i] = make_shared<Complex>();
+        for (int j = 0; j < nh; j++) {
+            double dist = (h.block<2,1>(0,j)-s).norm() + 
+                (C.block<2,1>(0,i) - h.block<2,1>(0,j)).norm();
+            complex<double> phase(0, 2*M_PI/f*dist);
+            E[i]->value += exp(phase);
+        }
+    }
+    return E;
 }
 
 TEST(CalcE, 2pts) {
@@ -239,6 +259,9 @@ TEST(CalcE, 2pts) {
     HeightFieldPtr H = make_shared<HeightField>(C.block<2,1>(0,0), s, x, y, f);
     // Init solution.
     Eigen::MatrixXd h = randomHeightMap(x, y);
+    // Calc E.
+    std::vector<ComplexPtr> E = calcE(C, s, h, f);
+    
 }
 
 int main(int argc, char* argv[]) {

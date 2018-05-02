@@ -126,22 +126,24 @@ exp(i*2*pi/f*dist);
 f = 1;
 
 % Camera locations.
-n_c = 500;
+n_c = 200;
 c = zeros(2,n_c);
-c(1,:) = linspace(-n_c/2, n_c/2, n_c);
+c(1,:) = linspace(-n_c, n_c, n_c);
 c(2,:) = 1000;
 
 % Laser location.
 s = [500; 500];
 
 % Random height map.
-n_h = 8;
+rng(6)
+n_h = 2;
 h = zeros(2, n_h);
 h(1,:) = linspace(-n_h/2, n_h/2, n_h);
 h_max = f/2;
 for i = 1:n_h
     h(2,i) = h_max * (randi(2)-1);
 end
+h
 
 % Electric field.
 E = calcE(c, s, h, f);
